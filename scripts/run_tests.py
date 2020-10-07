@@ -14,13 +14,8 @@ def run_tests():
     stanchion_bin = os.path.join(repo_dir, "bin", "stanchion")
     berry_bin = os.path.join(repo_dir, "bin", "berry")
 
-    if os.path.exists(stanchion_bin):
-        runner_bin = stanchion_bin
-    elif os.path.exists(berry_bin):
-        runner_bin = berry_bin
-    else:
-        print("Error: neither bin/stanchion nor bin/berry found. Run 'make' first.")
-        sys.exit(1)
+    module_paths = "lib:core:hal:ocpp:energy:policy:station:diag:sim:tests"
+    runner_cmd = [berry_bin, "-m", module_paths]
 
     tests_dir = os.path.join(repo_dir, "tests")
     if not os.path.isdir(tests_dir):
@@ -37,7 +32,7 @@ def run_tests():
         sys.exit(0)
 
     print(f"============================================================")
-    print(f"Running Stanchion Test Suites with {os.path.basename(runner_bin)}")
+    print(f"Running Stanchion Test Suites with {os.path.basename(berry_bin)}")
     print(f"Found {len(test_files)} test suite file(s)")
     print(f"============================================================")
 
@@ -48,7 +43,7 @@ def run_tests():
     for idx, tf in enumerate(test_files, 1):
         tpath = os.path.join(tests_dir, tf)
         t_start = time.time()
-        res = subprocess.run([runner_bin, tpath], capture_output=True, text=True, cwd=repo_dir)
+        res = subprocess.run(runner_cmd + [tpath], capture_output=True, text=True, cwd=repo_dir)
         elapsed = (time.time() - t_start) * 1000.0
 
         if res.returncode == 0:

@@ -215,9 +215,9 @@ static int load_package(bvm *vm, bstring *path)
     int res = load_cwd(vm, path); /* load from current directory */
     if (res == BE_IO_ERROR && vm->module.path) {
         blist *list = vm->module.path;
-        bvalue *v = be_list_end(list) - 1;
-        bvalue *first = be_list_data(list);
-        for (; res == BE_IO_ERROR && v >= first; v--) {
+        int count = be_list_count(list);
+        for (int i = count - 1; res == BE_IO_ERROR && i >= 0; --i) {
+            bvalue *v = be_list_at(list, i);
             if (var_isstr(v)) {
                 res = load_path(vm, var_tostr(v), path);
             }

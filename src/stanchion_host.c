@@ -8,6 +8,7 @@
 
 #include "stanchion.h"
 #include "../vendor/berry/src/berry.h"
+#include "../vendor/berry/src/be_repl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,18 +144,33 @@ static void setup_import_paths(bvm *vm, const char *base_dir)
         NULL
     };
 
-    char code[1024];
+    char full_path[512];
     for (int i = 0; paths[i] != NULL; ++i) {
-        if (base_dir && strlen(base_dir) > 0) {
-            snprintf(code, sizeof(code),
-                     "import sys; sys.path().push('%s/%s')", base_dir, paths[i]);
+        if (base_dir && strlen(base_dir) > 0 && strcmp(base_dir, ".") != 0) {
+            snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, paths[i]);
+            be_module_path_set(vm, full_path);
         } else {
-            snprintf(code, sizeof(code),
-                     "import sys; sys.path().push('%s')", paths[i]);
+            be_module_path_set(vm, paths[i]);
         }
-        be_loadbuffer(vm, "path_setup", code, strlen(code));
-        be_pcall(vm, 0);
-        be_pop(vm, 1);
+    }
+}
+
+static int handle_vm_result(bvm *vm, int res)
+{
+    switch (res) {
+    case BE_OK:
+        return 0;
+    case BE_EXCEPTION:
+        be_dumpexcept(vm);
+        return 1;
+    case BE_EXIT:
+        return be_toindex(vm, -1);
+    case BE_IO_ERROR:
+        fprintf(stderr, "error: %s\n", be_tostring(vm, -1));
+        return 1;
+    default:
+        fprintf(stderr, "error: execution returned code %d\n", res);
+        return 1;
     }
 }
 
@@ -176,34 +192,18 @@ int main(int argc, char **argv)
     if (argc > 1) {
         if (strcmp(argv[1], "-e") == 0 && argc > 2) {
             const char *code = argv[2];
-            int res = be_loadbuffer(vm, "cmdline", code, strlen(code));
+            int res = be_loadstring(vm, code);
             if (res == BE_OK) {
                 res = be_pcall(vm, 0);
-                if (res != BE_OK) {
-                    fprintf(stderr, "Runtime error in -e expression: %s\n",
-                            be_tostring(vm, -1));
-                    exit_code = 1;
-                }
-            } else {
-                fprintf(stderr, "Compile error in -e expression: %s\n",
-                        be_tostring(vm, -1));
-                exit_code = 1;
             }
+            exit_code = handle_vm_result(vm, res);
         } else {
             const char *script_file = argv[1];
-            int res = be_loadfile(vm, script_file);
+            int res = be_loadmode(vm, script_file, 0);
             if (res == BE_OK) {
                 res = be_pcall(vm, 0);
-                if (res != BE_OK) {
-                    fprintf(stderr, "Runtime error in script %s: %s\n",
-                            script_file, be_tostring(vm, -1));
-                    exit_code = 1;
-                }
-            } else {
-                fprintf(stderr, "Compile error in script %s: %s\n",
-                        script_file, be_tostring(vm, -1));
-                exit_code = 1;
             }
+            exit_code = handle_vm_result(vm, res);
         }
     } else {
         printf("Stanchion v%s - Intelligent EV Charging Station Controller\n",
@@ -211,19 +211,11 @@ int main(int argc, char **argv)
         printf("Usage: stanchion <script.be> [args...]\n");
         printf("Running default station simulation...\n");
 
-        int res = be_loadfile(vm, "station/main.be");
+        int res = be_loadmode(vm, "station/main.be", 0);
         if (res == BE_OK) {
             res = be_pcall(vm, 0);
-            if (res != BE_OK) {
-                fprintf(stderr, "Runtime error in station/main.be: %s\n",
-                        be_tostring(vm, -1));
-                exit_code = 1;
-            }
-        } else {
-            fprintf(stderr, "Could not open station/main.be: %s\n",
-                    be_tostring(vm, -1));
-            exit_code = 1;
         }
+        exit_code = handle_vm_result(vm, res);
     }
 
     be_vm_delete(vm);

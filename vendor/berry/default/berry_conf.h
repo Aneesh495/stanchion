@@ -109,7 +109,7 @@
  * Set the starting size of the stack at VM creation.
  * Default: 50
  **/
-#define BE_STACK_START                  50
+#define BE_STACK_START                  4096
 
 /* Macro: BE_CONST_SEARCH_SIZE
  * Constants in function are limited to 255. However the compiler
