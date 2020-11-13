@@ -5,6 +5,7 @@
 # Licensed under the Apache License, Version 2.0
 
 import string
+import time
 import string_util as StringUtil
 
 # Fast 64-bit XorShift PRNG for entropy in embedded environments
@@ -13,7 +14,6 @@ class XorShift64
 
     def init(seed)
         if seed == nil || seed == 0
-            # Default fallback seed
             self.state = 88172645463325252
         else
             self.state = int(seed)
@@ -21,7 +21,6 @@ class XorShift64
     end
 
     def next_u32()
-        # 64-bit xorshift: x ^= x << 13; x ^= x >> 7; x ^= x << 17;
         var x = self.state
         x = x ^ ((x << 13) & 0xFFFFFFFFFFFFFFFF)
         x = x ^ (x >> 7)
@@ -37,17 +36,10 @@ end
 
 class UUID
     static var _rng
-    static var _seed_init
 
     static def _get_rng()
         if UUID._rng == nil
-            var seed = 123456789
-            # Try to grab monotonic time if host native function exists
-            try
-                seed = host_monotonic_us()
-            except .. as e
-                seed = 987654321
-            end
+            var seed = int(time.time() * 1000.0) ^ 987654321
             UUID._rng = XorShift64(seed)
         end
         return UUID._rng
