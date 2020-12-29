@@ -182,6 +182,30 @@ class MathExt
         var current = (real(active_power_kw) * 1000.0) / (sqrt3 * real(line_voltage_v) * real(pf))
         return current
     end
+
+    # Sort a list of numeric values in ascending order using insertion sort
+    static def sort_numeric(values)
+        if values == nil || size(values) <= 1
+            return values
+        end
+        var n = size(values)
+        var arr = []
+        for v : values
+            arr.push(v)
+        end
+        var i = 1
+        while i < n
+            var key = arr[i]
+            var j = i - 1
+            while j >= 0 && arr[j] > key
+                arr[j + 1] = arr[j]
+                j = j - 1
+            end
+            arr[j + 1] = key
+            i = i + 1
+        end
+        return arr
+    end
 end
 
 return MathExt
