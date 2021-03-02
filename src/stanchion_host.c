@@ -140,6 +140,7 @@ static void setup_import_paths(bvm *vm, const char *base_dir)
         "station",
         "diag",
         "sim",
+        "protocols",
         "tests",
         NULL
     };

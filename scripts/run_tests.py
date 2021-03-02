@@ -14,7 +14,7 @@ def run_tests():
     stanchion_bin = os.path.join(repo_dir, "bin", "stanchion")
     berry_bin = os.path.join(repo_dir, "bin", "berry")
 
-    module_paths = "lib:core:hal:ocpp:energy:policy:station:diag:sim:tests"
+    module_paths = "lib:core:hal:ocpp:energy:policy:station:diag:sim:protocols:tests"
     runner_cmd = [berry_bin, "-m", module_paths]
 
     tests_dir = os.path.join(repo_dir, "tests")
