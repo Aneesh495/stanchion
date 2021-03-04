@@ -57,7 +57,6 @@ assert_equal(classname(test_map), "map", "classname({}) returns 'map'")
 
 # Bug 5: Global Namespace Mutation
 # Verifies that mutating globals via import global functions properly without syntax error
-import global
 global.test_reproduction_counter = 42
 assert_equal(global.test_reproduction_counter, 42, "Bug 5 Fix: import global namespace mutation succeeds")
 
